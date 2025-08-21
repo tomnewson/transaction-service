@@ -79,3 +79,20 @@ def test_summary_no_transactions(client: TestClient):
     r = client.get("/summary/999")
     assert r.status_code == 404
     assert r.json()["detail"] == "No transactions for user in range"
+
+def test_most_purchased_tie_break_latest_timestamp(client: TestClient):
+    """When products have equal counts, most recently purchased product_id should win."""
+    csv_data = """transaction_id,user_id,product_id,timestamp,transaction_amount
+p1,5,10,2024-01-01T00:00:00Z,1.00
+p2,5,11,2024-01-01T00:00:01Z,2.00
+p3,5,10,2024-01-02T00:00:00Z,1.50
+p4,5,11,2024-01-02T00:00:01Z,2.50
+"""
+    # Products 10 and 11 have identical counts.
+    # Expect product 11 chosen due to later last timestamp.
+    files = {"file": ("tie.csv", csv_data, "text/csv")}
+    r1 = client.post("/upload?replace=true", files=files)
+    assert r1.status_code == 200, r1.text
+    r2 = client.get("/summary/5")
+    assert r2.status_code == 200, r2.text
+    assert r2.json()["most_purchased_product_id"] == 11

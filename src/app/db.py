@@ -7,8 +7,8 @@ from typing import Any, Dict, Tuple
 import duckdb
 
 def get_db_path() -> str:
-    """Get the path to the DuckDB database file."""
-    db_path = Path(os.getenv("DB_PATH", "data/transactions.duckdb"))
+    """Get the path to the DuckDB database file. Defaults to data/transactions.duckdb"""
+    db_path = Path(os.getenv("DUCKDB_PATH", "data/transactions.duckdb"))
     db_path.parent.mkdir(parents=True, exist_ok=True)
     return str(db_path)
 
@@ -74,17 +74,28 @@ def summarise_user(
     start_dt: datetime,
     end_dt: datetime,
 ) -> Dict[str, Any]:
-    """Return a summary of transaction statistics for a user."""
+    """Return a summary of transaction statistics for a user.
+
+    Tie-break rule for most_purchased_product_id: If multiple products share the max
+    purchase count, choose the one whose latest purchase is most recent; if still tied
+    (identical latest timestamp), choose the lowest product_id for deterministic output.
+    """
     result = conn.execute(
         """
     WITH filtered AS (
         SELECT * FROM transactions
         WHERE user_id = ? AND "timestamp" BETWEEN ? AND ?
-    ), product_counts AS (
-        SELECT product_id, COUNT(*) AS c
+    ), product_stats AS (
+        SELECT
+            product_id,
+            COUNT(*) AS c,
+            MAX("timestamp") AS last_ts
         FROM filtered
         GROUP BY product_id
-        ORDER BY c DESC, product_id ASC
+    ), top_product AS (
+        SELECT product_id
+        FROM product_stats
+        ORDER BY c DESC, last_ts DESC, product_id ASC
         LIMIT 1
     )
     SELECT
@@ -92,7 +103,7 @@ def summarise_user(
         MIN(transaction_amount) AS min,
         MAX(transaction_amount) AS max,
         AVG(transaction_amount) AS mean,
-        (SELECT product_id FROM product_counts) AS most_purchased_product_id
+        (SELECT product_id FROM top_product) AS most_purchased_product_id
     FROM filtered;
     """,
         [user_id, start_dt, end_dt],
