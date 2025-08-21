@@ -14,3 +14,13 @@ def test_unsupported_media_type(client: TestClient):
     files = {"file": ("x.txt", b"not a csv", "text/plain")}
     r = client.post("/upload", files=files)
     assert r.status_code == 415
+
+def test_allowed_csv_mimetype(client: TestClient):
+    """Test allowed CSV media type."""
+    csv_data = """transaction_id,user_id,product_id,timestamp,transaction_amount
+a1,1,10,2024-03-01T00:00:00Z,100.00
+a2,1,11,2024-03-15T00:00:00Z,200.00
+"""
+    files = {"file": ("x.csv", csv_data, "text/csv")}
+    r = client.post("/upload", files=files)
+    assert r.status_code == 200
