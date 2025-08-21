@@ -6,9 +6,10 @@ from typing import Optional
 from fastapi import FastAPI, File, HTTPException, Query, UploadFile
 from fastapi.responses import JSONResponse
 
-from app.db import ensure_schema, get_connection, load_csv, summarise_user
-from app.models import SummaryResponse, UploadResponse
-from app.utils import allowed_csv_mimetype, validate_csv_headers, write_upload_to_temp
+from .db import ensure_schema, get_connection, load_csv, summarise_user
+from .models import SummaryResponse, UploadResponse
+from .utils import allowed_csv_mimetype, validate_csv_headers, write_upload_to_temp
+
 
 @asynccontextmanager
 async def lifespan(_):
@@ -20,12 +21,15 @@ async def lifespan(_):
     yield
     # Shutdown code
 
+
 app = FastAPI(title="Transactions Service", lifespan=lifespan)
+
 
 @app.get("/health")
 def health_check() -> JSONResponse:
     """Health check endpoint."""
     return JSONResponse(content={"status": "ok"})
+
 
 @app.post("/upload", response_model=UploadResponse)
 async def upload_csv(file: UploadFile = File(...), replace: bool = Query(False)) -> UploadResponse:
@@ -36,7 +40,7 @@ async def upload_csv(file: UploadFile = File(...), replace: bool = Query(False))
     tmp_path = await write_upload_to_temp(file)
     try:
         validate_csv_headers(tmp_path)
-    except ValueError as e:
+    except ValueError as e:  # pragma: no cover - simple error propagation
         raise HTTPException(status_code=400, detail=str(e)) from e
 
     conn = get_connection()
@@ -44,11 +48,12 @@ async def upload_csv(file: UploadFile = File(...), replace: bool = Query(False))
     rows, seconds, replaced = load_csv(conn, tmp_path, replace)
     return UploadResponse(rows=rows, seconds=seconds, replaced=replaced)
 
+
 @app.get("/summary/{user_id}", response_model=SummaryResponse)
 def get_summary(
-	user_id: int,
-	start: Optional[date] = Query(None, description="Inclusive start date (YYYY-MM-DD)"),
-	end: Optional[date] = Query(None, description="Inclusive end date (YYYY-MM-DD)")
+    user_id: int,
+    start: Optional[date] = Query(None, description="Inclusive start date (YYYY-MM-DD)"),
+    end: Optional[date] = Query(None, description="Inclusive end date (YYYY-MM-DD)"),
 ) -> SummaryResponse:
     """Get transaction summary for a user."""
     if start and end and start > end:
@@ -69,5 +74,5 @@ def get_summary(
         count=result["count"],
         min=result["min"],
         max=result["max"],
-        mean=result["mean"]
+        mean=result["mean"],
     )

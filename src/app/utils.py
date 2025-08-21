@@ -20,8 +20,9 @@ def allowed_csv_mimetype(mimetype: str | None) -> bool:
     return mimetype in [
         "text/csv",
         "application/csv",
-        "application/vnd.ms-excel"
+        "application/vnd.ms-excel",
     ]  # TODO: check for more valid mimetypes
+
 
 async def write_upload_to_temp(file: UploadFile):
     """Write the uploaded file to a temporary location."""
@@ -33,13 +34,14 @@ async def write_upload_to_temp(file: UploadFile):
             tmp.write(chunk)
     return tmp.name
 
+
 def validate_csv_headers(csv_path: str) -> None:
     """Validate the headers of a CSV file."""
-    with open(csv_path, 'r', newline="", encoding="utf-8") as f:
+    with open(csv_path, "r", newline="", encoding="utf-8") as f:
         reader = csv.reader(f)
         try:
             header = next(reader)
-        except StopIteration as exc:
+        except StopIteration as exc:  # pragma: no cover - trivial
             raise ValueError("CSV file is empty") from exc
         normalised = {h.strip().strip('"').lower() for h in header}
         if normalised != _EXPECTED_COLUMNS:

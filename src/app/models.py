@@ -11,6 +11,7 @@ class UploadResponse(BaseModel):
     seconds: float
     replaced: bool
 
+
 class SummaryResponse(BaseModel):
     """Response model for transaction summaries."""
     model_config = ConfigDict(from_attributes=True)
