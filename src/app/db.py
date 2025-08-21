@@ -77,14 +77,23 @@ def summarise_user(
     """Return a summary of transaction statistics for a user."""
     result = conn.execute(
         """
+    WITH filtered AS (
+        SELECT * FROM transactions
+        WHERE user_id = ? AND "timestamp" BETWEEN ? AND ?
+    ), product_counts AS (
+        SELECT product_id, COUNT(*) AS c
+        FROM filtered
+        GROUP BY product_id
+        ORDER BY c DESC, product_id ASC
+        LIMIT 1
+    )
     SELECT
-        COUNT(*)::BIGINT as count,
+        (SELECT COUNT(*) FROM filtered)::BIGINT AS count,
         MIN(transaction_amount) AS min,
         MAX(transaction_amount) AS max,
-        AVG(transaction_amount) AS mean
-    FROM transactions
-    WHERE user_id = ?
-        AND "timestamp" BETWEEN ? AND ?
+        AVG(transaction_amount) AS mean,
+        (SELECT product_id FROM product_counts) AS most_purchased_product_id
+    FROM filtered;
     """,
         [user_id, start_dt, end_dt],
     ).fetchone()
@@ -93,4 +102,5 @@ def summarise_user(
         "min": result[1],
         "max": result[2],
         "mean": result[3],
+        "most_purchased_product_id": result[4],
     }

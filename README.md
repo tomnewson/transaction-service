@@ -42,7 +42,7 @@ Query:
 - `end` (ISO date, default: `9999-12-31`): inclusive end date for user summary
 
 Responses:
-- `200` `{user_id, start, end, count, min, max, mean}`: User ID, date range, summary
+- `200` `{user_id, start, end, count, min, max, mean, most_purchased_product_id}`: User ID, date range, stats summary
 - `404`: no rows for user (in date range)
 - `422`: start date after end date
 
@@ -60,3 +60,4 @@ pytest -q
 ## Notes
 - Uses DuckDB's `read_csv_auto` for fast CSV ingestion into database.
 - Decimal maths for amounts, serialised as JSON strings by FastAPI.
+- If multiple products are valid contenders to be a user's most purchased, their `most_purchased_product_id` will be the one most recently purchased.

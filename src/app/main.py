@@ -111,4 +111,5 @@ def get_summary(
         min=result["min"],
         max=result["max"],
         mean=result["mean"],
+        most_purchased_product_id=result["most_purchased_product_id"],
     )

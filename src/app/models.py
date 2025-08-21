@@ -28,6 +28,7 @@ class SummaryResponse(BaseModel):
 				"min": "9.99",
 				"max": "20.01",
 				"mean": "15.00",
+				"most_purchased_product_id": 10,
 			}
 		},
     )
@@ -38,3 +39,4 @@ class SummaryResponse(BaseModel):
     min: Decimal | None
     max: Decimal | None
     mean: Decimal | None
+    most_purchased_product_id: int | None
