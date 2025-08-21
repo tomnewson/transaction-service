@@ -3,7 +3,6 @@ from datetime import datetime
 from decimal import Decimal
 from pydantic import BaseModel, ConfigDict
 
-
 class UploadResponse(BaseModel):
     """Response model for file uploads."""
     model_config = ConfigDict(
@@ -15,7 +14,6 @@ class UploadResponse(BaseModel):
     rows: int
     seconds: float
     replaced: bool
-
 
 class SummaryResponse(BaseModel):
     """Response model for transaction summaries."""

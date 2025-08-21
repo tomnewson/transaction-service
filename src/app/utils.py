@@ -12,7 +12,6 @@ _EXPECTED_COLUMNS: Set[str] = {
 	"transaction_amount",
 }
 
-
 def allowed_csv_mimetype(mimetype: str | None) -> bool:
     """Check if the provided mimetype is allowed for CSV files."""
     if not mimetype:
@@ -21,8 +20,7 @@ def allowed_csv_mimetype(mimetype: str | None) -> bool:
         "text/csv",
         "application/csv",
         "application/vnd.ms-excel",
-    ]  # TODO: check for more valid mimetypes
-
+    ]
 
 async def write_upload_to_temp(file: UploadFile):
     """Write the uploaded file to a temporary location."""
@@ -33,7 +31,6 @@ async def write_upload_to_temp(file: UploadFile):
                 break
             tmp.write(chunk)
     return tmp.name
-
 
 def validate_csv_headers(csv_path: str) -> None:
     """Validate the headers of a CSV file."""

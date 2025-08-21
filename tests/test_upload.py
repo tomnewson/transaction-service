@@ -3,7 +3,6 @@ import pytest
 from fastapi.testclient import TestClient
 from app.main import app
 
-
 @pytest.fixture(name="client")
 def _client(tmp_path, monkeypatch):
     """Test client for FastAPI."""

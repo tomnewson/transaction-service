@@ -6,13 +6,11 @@ from time import perf_counter
 from typing import Any, Dict, Tuple
 import duckdb
 
-
 def get_db_path() -> str:
     """Get the path to the DuckDB database file."""
     db_path = Path(os.getenv("DB_PATH", "data/transactions.duckdb"))
     db_path.parent.mkdir(parents=True, exist_ok=True)
     return str(db_path)
-
 
 def get_connection() -> duckdb.DuckDBPyConnection:
     """Create and return a connection to the DuckDB database."""
@@ -21,7 +19,6 @@ def get_connection() -> duckdb.DuckDBPyConnection:
     # Increase thread count to match cores for better performance
     conn.execute(f"PRAGMA threads={os.cpu_count() or 2}")
     return conn
-
 
 def ensure_schema(conn: duckdb.DuckDBPyConnection) -> None:
     """Ensure the database schema is created to match csv"""
@@ -37,12 +34,10 @@ def ensure_schema(conn: duckdb.DuckDBPyConnection) -> None:
 	"""
     )
 
-
 def _table_count(conn: duckdb.DuckDBPyConnection) -> int:
     """Get the count of rows in the transactions table."""
     result = conn.execute("SELECT COUNT(*) FROM transactions").fetchone()
     return result[0] if result else 0
-
 
 def load_csv(
     conn: duckdb.DuckDBPyConnection, csv_path: str, replace: bool
@@ -72,7 +67,6 @@ def load_csv(
     execution_time = perf_counter() - start_time
     rows_added = new_tx_count if replace else new_tx_count - initial_tx_count
     return (rows_added, execution_time, bool(replace))
-
 
 def summarise_user(
     conn: duckdb.DuckDBPyConnection,

@@ -31,7 +31,6 @@ async def lifespan(_):
     yield
     # Shutdown code
 
-
 app = FastAPI(
     title="Transactions Service",
     lifespan=lifespan,
@@ -40,12 +39,10 @@ app = FastAPI(
     openapi_tags=tags_meta,
 )
 
-
 @app.get("/health", tags=["ingest"])
 def health_check() -> JSONResponse:
     """Health check endpoint."""
     return JSONResponse(content={"status": "ok"})
-
 
 @app.post(
     "/upload",
@@ -77,7 +74,6 @@ async def upload_csv(file: UploadFile = File(...), replace: bool = Query(False))
     ensure_schema(conn)
     rows, seconds, replaced = load_csv(conn, tmp_path, replace)
     return UploadResponse(rows=rows, seconds=seconds, replaced=replaced)
-
 
 @app.get(
 	"/summary/{user_id}",
