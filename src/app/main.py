@@ -10,6 +10,16 @@ from .db import ensure_schema, get_connection, load_csv, summarise_user
 from .models import SummaryResponse, UploadResponse
 from .utils import allowed_csv_mimetype, validate_csv_headers, write_upload_to_temp
 
+tags_meta = [
+	{
+		"name": "ingest",
+		"description": "Upload and ingest CSV transaction data.",
+	},
+	{
+		"name": "query",
+		"description": "Query per-user statistics.",
+	},
+]
 
 @asynccontextmanager
 async def lifespan(_):
@@ -22,16 +32,36 @@ async def lifespan(_):
     # Shutdown code
 
 
-app = FastAPI(title="Transactions Service", lifespan=lifespan)
+app = FastAPI(
+    title="Transactions Service",
+    lifespan=lifespan,
+    version="0.1.0",
+	description="Ingest a CSV of transactions and query per-user stats over a date range.",
+    openapi_tags=tags_meta,
+)
 
 
-@app.get("/health")
+@app.get("/health", tags=["ingest"])
 def health_check() -> JSONResponse:
     """Health check endpoint."""
     return JSONResponse(content={"status": "ok"})
 
 
-@app.post("/upload", response_model=UploadResponse)
+@app.post(
+    "/upload",
+    response_model=UploadResponse,
+    tags=["ingest"],
+    summary="Upload CSV of transactions",
+    description=(
+		"Accepts a CSV file with header: "
+		"`transaction_id,user_id,product_id,timestamp,transaction_amount`. "
+		"Set `replace=true` to clear existing data before loading."
+	),
+	responses={
+		400: {"description": "Invalid header or empty CSV"},
+		415: {"description": "Unsupported media type"},
+	},
+)
 async def upload_csv(file: UploadFile = File(...), replace: bool = Query(False)) -> UploadResponse:
     """Upload a CSV file."""
     if not allowed_csv_mimetype(file.content_type):
@@ -49,7 +79,17 @@ async def upload_csv(file: UploadFile = File(...), replace: bool = Query(False))
     return UploadResponse(rows=rows, seconds=seconds, replaced=replaced)
 
 
-@app.get("/summary/{user_id}", response_model=SummaryResponse)
+@app.get(
+	"/summary/{user_id}",
+	response_model=SummaryResponse,
+	tags=["query"],
+	summary="Summarise a user's transactions",
+	description="Returns count, min, max, and mean for a user within an optional date range.",
+	responses={
+		404: {"description": "No transactions for user in range"},
+		422: {"description": "Invalid date range"},
+	},
+)
 def get_summary(
     user_id: int,
     start: Optional[date] = Query(None, description="Inclusive start date (YYYY-MM-DD)"),
